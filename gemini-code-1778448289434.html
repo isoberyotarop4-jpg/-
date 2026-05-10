@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Digital Student ID</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --th-purple: #712271; /* 東北大カラー */
+            --bg-gray: #f2f2f7;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* ヘッダー */
+        .header {
+            width: 100%;
+            background-color: var(--th-purple);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* 学生証カードのコンテナ */
+        .id-card {
+            width: 90%;
+            max-width: 350px;
+            background: white;
+            border-radius: 20px;
+            margin-top: 30px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+        }
+
+        .card-title {
+            color: var(--th-purple);
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--th-purple);
+            padding-bottom: 10px;
+        }
+
+        /* 顔写真エリア */
+        .photo-placeholder {
+            width: 120px;
+            height: 150px;
+            background-color: #e0e0e0;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            color: #888;
+            font-size: 0.8rem;
+            border: 1px solid #ccc;
+        }
+
+        /* プロフィール情報 */
+        .info-row {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* QRコード風エリア */
+        .qr-area {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .qr-placeholder {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            background: url('https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Student-ID-Sample') no-repeat center;
+            background-size: contain;
+        }
+
+        /* 設定ボタン（右上の小さな歯車） */
+        .settings-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.3;
+        }
+
+        /* 入力フォーム（初期は非表示） */
+        #edit-form {
+            display: none;
+            width: 90%;
+            max-width: 350px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--th-purple);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">学生証表示</div>
+
+    <div class="id-card" id="student-card">
+        <button class="settings-btn" onclick="toggleEdit()">⚙️</button>
+        <div class="card-title">STUDENT ID CARD</div>
+        
+        <div class="photo-placeholder" id="photo">📷 写真</div>
+
+        <div class="info-row">
+            <div class="label">氏名 / Name</div>
+            <div class="value" id="display-name">---</div>
+        </div>
+
+        <div class="info-row">
+            <div class="label">学籍番号 / Student No.</div>
+            <div class="value" id="display-id">---</div>
+        </div>
+
+        <div class="qr-area">
+            <div class="qr-placeholder"></div>
+            <div style="font-size: 0.6rem; color: #888; margin-top: 5px;">QRコードをスキャンして入館</div>
+        </div>
+    </div>
+
+    <div id="edit-form">
+        <h3>情報を登録</h3>
+        <input type="text" id="input-name" placeholder="氏名を入力">
+        <input type="text" id="input-id" placeholder="学籍番号を入力">
+        <button class="save-btn" onclick="saveData()">カードを更新する</button>
+    </div>
+
+    <script>
+        // ページ読み込み時に保存されたデータを表示
+        window.onload = function() {
+            const name = localStorage.getItem('std-name');
+            const id = localStorage.getItem('std-id');
+            if (name && id) {
+                document.getElementById('display-name').innerText = name;
+                document.getElementById('display-id').innerText = id;
+            } else {
+                // データがない場合はフォームを表示
+                toggleEdit();
+            }
+        };
+
+        function toggleEdit() {
+            const form = document.getElementById('edit-form');
+            form.style.display = (form.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function saveData() {
+            const name = document.getElementById('input-name').value;
+            const id = document.getElementById('input-id').value;
+
+            if (name && id) {
+                localStorage.setItem('std-name', name);
+                localStorage.setItem('std-id', id);
+                document.getElementById('display-name').innerText = name;
+                document.getElementById('display-id').innerText = id;
+                toggleEdit();
+                alert("保存しました。");
+            } else {
+                alert("すべての項目を入力してください。");
+            }
+        }
+    </script>
+</body>
+</html>
